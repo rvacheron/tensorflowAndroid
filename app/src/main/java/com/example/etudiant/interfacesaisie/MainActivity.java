@@ -2,29 +2,16 @@ package com.example.etudiant.interfacesaisie;
 
 import android.Manifest;
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.util.Base64;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
 
 
 public class MainActivity extends Activity implements View.OnClickListener{
@@ -114,11 +101,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
                     Toast.makeText(getApplicationContext(), R.string.texteDesciption, Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    try {
-                        envoiImage(view);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+					//Traitement de l'image
                 }
 				break;
 
@@ -133,78 +116,6 @@ public class MainActivity extends Activity implements View.OnClickListener{
 				this.hide_choice_button(1);
 
 		}
-	}
-
-	//Envoi de l'image vers le serveur : Transformation de la DrawView en Bitmap puis en String pour l'envoi avec un Json
-	public void envoiImage(View view) throws JSONException {
-
-		//Creation d'un String à partir du bitmap pour le preparer à l'envoi
-		Bitmap bitmapEnvoi = mDrawingView.getBitmap();
-		final int COMPRESSION_QUALITY = 100;
-		String encodedImage;
-		ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
-		bitmapEnvoi.compress(Bitmap.CompressFormat.PNG, COMPRESSION_QUALITY, byteArrayBitmapStream);
-		byte[] b = byteArrayBitmapStream.toByteArray();
-		encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
-
-		//Préparation du JSON avec l'image
-		JSONObject myJson = new JSONObject();
-		myJson.put("img", encodedImage);
-		myJson.put("label","label");
-
-		//Preparation de la requete du JSON à l'adresse 'url'
-		String url = "http://tf.boblecodeur.fr:8000/postimg";
-
-		JsonObjectRequest jsObjRequest = new JsonObjectRequest(Request.Method.POST, url, myJson, new Response.Listener<JSONObject>() {
-			@Override
-			public void onResponse(JSONObject response) {
-				try {
-					response.getString("mot");
-					//switch(response.getInt("nbResultat")){-----------------------
-					if(mode) { //Mode expert
-						switch (1) {  //On affiche le nombre de résultat en fonction du nombre de choix que propose le serveur
-							case 0:
-								Toast.makeText(getApplicationContext(), R.string.error_word, Toast.LENGTH_SHORT).show();
-								break;
-							case 3:
-								bChoice3.setVisibility(Button.VISIBLE);
-							case 2:
-								bChoice2.setVisibility(Button.VISIBLE);
-							case 1:
-								bChoice1.setVisibility(Button.VISIBLE);
-								bSave.setVisibility(EditText.GONE);
-								mDrawingView.hidemPaint();
-								bReset.setVisibility(View.GONE);
-								texteDescription.setVisibility(View.GONE);
-								bCancelChoice.setVisibility(View.VISIBLE);
-								Toast toast = Toast.makeText(getApplicationContext(), R.string.ask, Toast.LENGTH_SHORT);
-								toast.setGravity(Gravity.DISPLAY_CLIP_VERTICAL | Gravity.CENTER_HORIZONTAL, 1, 1);
-								toast.show();
-								bChoice1.setText(response.getString("mot"));
-								break;
-							default:
-								break;
-						}
-					}
-					else {  //Mode Démonstration
-						texteDescription.setText(response.getString("mot")+R.string.with+"xxx"+R.string.percent);
-					}
-				} catch (JSONException e) {
-					e.printStackTrace();
-					Toast.makeText(getApplicationContext(), R.string.error_server, Toast.LENGTH_SHORT).show();
-
-				}
-			}
-		}, new Response.ErrorListener() {
-			@Override
-			public void onErrorResponse(VolleyError error) {
-				error.printStackTrace();
-				Toast.makeText(getApplicationContext(), R.string.error_sending, Toast.LENGTH_SHORT).show();
-			}
-		});
-
-		//Envoi de la requete préparée à l'étape précédente
-		MySingleton.getInstance(this).addToRequestQueue(jsObjRequest);
 	}
 
 
